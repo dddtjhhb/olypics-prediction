@@ -8,21 +8,21 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, mean_squared_error
 import numpy as np
 
-# 加载数据
-medal_counts = pd.read_csv('/Users/huangruisi/Desktop/代码及数据/data/summerOly_medal_counts.csv', encoding='utf-8')
-hosts = pd.read_csv('/Users/huangruisi/Desktop/代码及数据/data/summerOly_hosts.csv', encoding='utf-8')
-programs = pd.read_csv('/Users/huangruisi/Desktop/代码及数据/data/summerOly_programs.csv', encoding='utf-8')
+# Load data
+medal_counts = pd.read_csv('/Users/huangruisi/Desktop/data/summerOly_medal_counts.csv', encoding='utf-8')
+hosts = pd.read_csv('/Users/huangruisi/Desktop/data/summerOly_hosts.csv', encoding='utf-8')
+programs = pd.read_csv('/Users/huangruisi/Desktop/data/summerOly_programs.csv', encoding='utf-8')
 
 medal_counts = medal_counts[medal_counts['Year'] <= 2024]
 X = medal_counts[['Year', 'Gold', 'Total']]
 y_gold = medal_counts['Gold']
 y_total = medal_counts['Total']
 
-# 划分数据集和训练集
+# Split the dataset into training and testing sets
 X_train, X_test, y_gold_train, y_gold_test = train_test_split(X, y_gold, test_size=0.2, random_state=42)
 _, _, y_total_train, y_total_test = train_test_split(X, y_total, test_size=0.2, random_state=42)
 
-# 初始化模型
+# Initialize models
 models = {
     'Logistic Regression': LogisticRegression(max_iter=1000),
     'MultinomialNB': MultinomialNB(),
@@ -32,27 +32,27 @@ models = {
     'Neural Network': MLPClassifier(max_iter=1000)
 }
 
-# 训练和评估每个模型
+# Train and evaluate each model
 accuracy_results = {}
 
 for model_name, model in models.items():
-    # 训练模型
+    # Train the model
     model.fit(X_train, y_gold_train)
-    # 预测
+    # Predict
     y_gold_pred = model.predict(X_test)
-    # 计算准确率
+    # Calculate accuracy score
     accuracy = accuracy_score(y_gold_test, y_gold_pred)
     accuracy_results[model_name] = accuracy
 
-# 打印每个模型的准确率
+# Print the accuracy of each model
 for model_name, accuracy in accuracy_results.items():
     print(f"{model_name}: {accuracy:.6f}")
 
-# 选择表现最佳的模型进行预测
+# Select the best performing model for prediction
 best_model_name = max(accuracy_results, key=accuracy_results.get)
 best_model = models[best_model_name]
 
-# 使用最佳模型训练和预测
+# Train and predict using the best model
 best_model.fit(X_train, y_gold_train)
 gold_predictions = best_model.predict(X_test)
 total_predictions = best_model.predict(X_test)
@@ -63,17 +63,17 @@ total_mse = mean_squared_error(y_total_test, total_predictions)
 print(f'Gold Medal MSE: {gold_mse}')
 print(f'Total Medal MSE: {total_mse}')
 
-# 预测2028年的奖牌数：
+# Predict medal counts for 2028:
 X_2028 = medal_counts[medal_counts['Year'] == 2024].copy()
 X_2028['Year'] = 2028
 
 X_2028['Predicted_Gold_2028'] = best_model.predict(X_2028[['Year', 'Gold', 'Total']])
 X_2028['Predicted_Total_2028'] = best_model.predict(X_2028[['Year', 'Gold', 'Total']])
 
-# 保存预测结果：
+# Save prediction results:
 X_2028[['NOC', 'Predicted_Gold_2028', 'Predicted_Total_2028']].to_csv('/Users/huangruisi/Desktop/代码及数据/data/summerOly_medal_counts2.csv', mode='a', header=False, index=False)
 
-# 识别可能表现更好或更差的国家：
+# Identify countries likely to perform better or worse:
 improvements = X_2028[['NOC', 'Predicted_Gold_2028', 'Predicted_Total_2028']].copy()
 improvements = improvements.merge(medal_counts[medal_counts['Year'] == 2024][['NOC', 'Gold', 'Total']], on='NOC')
 improvements['Gold_Change'] = improvements['Predicted_Gold_2028'] - improvements['Gold']
@@ -82,16 +82,16 @@ improvements['Total_Change'] = improvements['Predicted_Total_2028'] - improvemen
 print(improvements.sort_values(by='Gold_Change', ascending=False).head(10))
 print(improvements.sort_values(by='Total_Change', ascending=False).head(10))
 
-# 预测将赢得首枚奖牌的国家数量：
+# Predict the number of countries that will win their first gold medal:
 first_medal_countries = improvements[(improvements['Gold'] == 0) & (improvements['Predicted_Gold_2028'] > 0)]
 print(f'Countries predicted to win their first gold medal: {len(first_medal_countries)}')
 
-# 考虑赛事数量和类型对奖牌数的影响：
+# Consider the impact of event count and type on medal totals:
 event_impact = programs.groupby('Sport').sum().reset_index()
 event_impact = event_impact[['Sport', '2024']].rename(columns={'2024': 'Event_Count_2024'})
 
 # Ensure 'NOC' column is present in event_impact before merging
 event_impact = event_impact.merge(medal_counts[medal_counts['Year'] == 2024][['NOC', 'Total']], left_on='Sport', right_on='NOC', how='left')
 
-# 打印2024年赛事数量最多的前10个运动项目及其对应的总奖牌数
+# Print the top 10 sports with the most events in 2024 and their corresponding medal counts
 print(event_impact.sort_values(by='Event_Count_2024', ascending=False).head(10))
