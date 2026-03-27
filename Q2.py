@@ -2,18 +2,18 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-# 加载数据
+# Load data
 medal_counts = pd.read_csv('data/summerOly_medal_counts.csv', encoding='utf-8')
 athletes = pd.read_csv('data/summerOly_athletes.csv', encoding='utf-8')
 
-# 识别著名教练更换国家的实例
+# Identify instances of notable coaches changing countries
 notable_coaches = {
     'Lang Ping': {'countries': ['USA', 'CHN'], 'start_years': [2005, 2013], 'end_years': [2008, 2021]},
     'Coach B': {'countries': ['USA'], 'start_years': [2010], 'end_years': [2020]},
-    # 根据需要添加更多教练
+    # Add more coaches as needed
 }
 
-# 分析教练任期前后奖牌数的变化
+# Analyze changes in medal counts before, during, and after a coach's tenure
 def analyze_coach_impact(coach_info):
     results = []
     for country, start_year, end_year in zip(coach_info['countries'], coach_info['start_years'], coach_info['end_years']):
@@ -28,7 +28,7 @@ def analyze_coach_impact(coach_info):
         results.append((country, before_medals, during_medals, after_medals))
     return results
 
-# 收集建模数据
+# Collect data for modeling
 coach_impact_data = []
 for coach, info in notable_coaches.items():
     impacts = analyze_coach_impact(info)
@@ -43,28 +43,28 @@ for coach, info in notable_coaches.items():
 
 coach_impact_df = pd.DataFrame(coach_impact_data)
 
-# 创建模型以量化优秀教练对奖牌数的影响
+# Create a model to quantify the impact of great coaches on medal counts
 X = coach_impact_df[['before_medals']]
 y = coach_impact_df['during_medals'] - coach_impact_df['before_medals']
 
 model = LinearRegression()
 model.fit(X, y)
 
-# 估算教练效应对总奖牌数的贡献
+# Estimate the contribution of the coaching effect to the total medal count
 coach_impact_df['predicted_impact'] = model.predict(coach_impact_df[['before_medals']])
 coach_impact_df['actual_impact'] = coach_impact_df['during_medals'] - coach_impact_df['before_medals']
 
 print(coach_impact_df)
 
-# 识别三个国家和运动项目，这些国家和项目中投资优秀教练可能会产生显著影响
+# Identify three countries and sports where investing in great coaches could have a significant impact
 countries_sports = [
     {'country': 'USA', 'sport': 'Swimming'},
     {'country': 'CHN', 'sport': 'Gymnastics'},
     {'country': 'GBR', 'sport': 'Athletics'},
-    # 根据需要添加更多国家和运动项目
+    # Add more countries and sports as needed
 ]
 
-# 估算这些国家和运动项目的奖牌数潜在增加量
+# Estimate the potential increase in medals for these countries and sports
 def estimate_potential_increase(country, sport):
     avg_medals = athletes[(athletes['NOC'] == country) & (athletes['Sport'] == sport)]['Medal'].count() / len(athletes['Year'].unique())
     predicted_increase = model.predict([[avg_medals]])[0]
