@@ -71,7 +71,7 @@ X_2028['Predicted_Gold_2028'] = best_model.predict(X_2028[['Year', 'Gold', 'Tota
 X_2028['Predicted_Total_2028'] = best_model.predict(X_2028[['Year', 'Gold', 'Total']])
 
 # Save prediction results:
-X_2028[['NOC', 'Predicted_Gold_2028', 'Predicted_Total_2028']].to_csv('/Users/huangruisi/Desktop/代码及数据/data/summerOly_medal_counts2.csv', mode='a', header=False, index=False)
+X_2028[['NOC', 'Predicted_Gold_2028', 'Predicted_Total_2028']].to_csv('/Users/huangruisi/Desktop/data/summerOly_medal_counts2.csv', mode='a', header=False, index=False)
 
 # Identify countries likely to perform better or worse:
 improvements = X_2028[['NOC', 'Predicted_Gold_2028', 'Predicted_Total_2028']].copy()
